@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "duall_wheel_mount:block/dual_wheel_mount"
+    },
+    "facing=east": {
+      "model": "duall_wheel_mount:block/dual_wheel_mount",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "duall_wheel_mount:block/dual_wheel_mount",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "duall_wheel_mount:block/dual_wheel_mount",
+      "y": 270
+    }
+  }
+}

@@ -37,12 +37,12 @@ public class DualWheelMountBlock extends HorizontalKineticBlock
     @Override
     public boolean hasShaftTowards(
             LevelReader level, BlockPos pos, BlockState state, Direction direction) {
-        return direction == state.getValue(HORIZONTAL_FACING).getOpposite();
+        return direction == Direction.UP;
     }
 
     @Override
     public Direction.Axis getRotationAxis(BlockState state) {
-        return state.getValue(HORIZONTAL_FACING).getAxis();
+        return Direction.Axis.Y;
     }
 
     @Override
@@ -60,99 +60,70 @@ public class DualWheelMountBlock extends HorizontalKineticBlock
         }
 
         ItemStack held = player.getItemInHand(hand);
-
         Direction facing = state.getValue(HORIZONTAL_FACING);
         Direction leftSide = facing.getCounterClockWise();
         Direction rightSide = facing.getClockWise();
-        Direction clickedFace = hitResult.getDirection();
 
-        int targetSlot = clickedFace == leftSide ? 0
-                : clickedFace == rightSide ? 1
-                : -1;
+        // Determine the clicked side from the actual hit position, not the face
+        // normal. The ray can hit a front/top face even when the player clicks
+        // near one side of the mount; using getDirection() therefore flips or
+        // loses the side selection in some orientations. Project the hit point
+        // onto the mount's local left/right axis so the mapping is orientation
+        // independent and matches the renderer: RIGHT slot is on local left.
+        double localX = hitResult.getLocation().x - (pos.getX() + 0.5);
+        double localZ = hitResult.getLocation().z - (pos.getZ() + 0.5);
+        double sideProjection = localX * leftSide.getStepX() + localZ * leftSide.getStepZ();
+        int targetSlot = sideProjection > 0.0 ? 0 : sideProjection < 0.0 ? 1 : -1;
 
-        // Empty hand: remove a wheel from the side that was clicked.
         if (held.isEmpty()) {
             if (targetSlot == -1) {
                 if (!level.isClientSide) {
                     player.displayClientMessage(
-                            Component.literal("Click the left or right side to remove a wheel."),
-                            true);
+                            Component.literal("Click the left or right side to remove a wheel."), true);
                 }
                 return ItemInteractionResult.sidedSuccess(level.isClientSide);
             }
 
             if (!level.isClientSide) {
-                ItemStack removed = targetSlot == 0
-                        ? be.getLeftWheel().copy()
-                        : be.getRightWheel().copy();
-
+                ItemStack removed = targetSlot == 0 ? be.getLeftWheel().copy() : be.getRightWheel().copy();
                 if (!removed.isEmpty()) {
-                    if (targetSlot == 0) {
-                        be.getInventory().setLeftWheel(ItemStack.EMPTY);
-                    } else {
-                        be.getInventory().setRightWheel(ItemStack.EMPTY);
-                    }
-
-                    if (!player.getInventory().add(removed)) {
-                        player.drop(removed, false);
-                    }
-
+                    if (targetSlot == 0) be.getInventory().setLeftWheel(ItemStack.EMPTY);
+                    else be.getInventory().setRightWheel(ItemStack.EMPTY);
+                    if (!player.getInventory().add(removed)) player.drop(removed, false);
                     be.setChanged();
                 } else {
                     String side = targetSlot == 0 ? "left" : "right";
-                    player.displayClientMessage(
-                            Component.literal("There is no " + side + " wheel installed."),
-                            true);
+                    player.displayClientMessage(Component.literal("There is no " + side + " wheel installed."), true);
                 }
             }
-
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        // Only tire items can be installed.
         if (held.get(OffroadDataComponents.TIRE) == null) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        // A tire clicked on front/back/top/bottom gets a fitting message.
         if (targetSlot == -1) {
             if (!level.isClientSide) {
-                player.displayClientMessage(
-                        Component.literal("This side is not used for wheel installation."),
-                        true);
+                player.displayClientMessage(Component.literal("This side is not used for wheel installation."), true);
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
 
         if (!level.isClientSide) {
-            boolean occupied = targetSlot == 0
-                    ? !be.getLeftWheel().isEmpty()
-                    : !be.getRightWheel().isEmpty();
-
+            boolean occupied = targetSlot == 0 ? !be.getLeftWheel().isEmpty() : !be.getRightWheel().isEmpty();
             String side = targetSlot == 0 ? "left" : "right";
-
             if (occupied) {
-                player.displayClientMessage(
-                        Component.literal("The " + side + " wheel position is already occupied."),
-                        true);
+                player.displayClientMessage(Component.literal("The " + side + " wheel position is already occupied."), true);
                 return ItemInteractionResult.sidedSuccess(false);
             }
 
             ItemStack wheel = held.copyWithCount(1);
-
-            if (targetSlot == 0) {
-                be.getInventory().setLeftWheel(wheel);
-            } else {
-                be.getInventory().setRightWheel(wheel);
-            }
-
+            if (targetSlot == 0) be.getInventory().setLeftWheel(wheel);
+            else be.getInventory().setRightWheel(wheel);
             held.shrink(1);
             be.setChanged();
-
-            player.displayClientMessage(
-                    Component.literal("Inserted the " + side + " wheel."),
-                    true);
-
+            player.displayClientMessage(Component.literal("Inserted the " + side + " wheel."), true);
             return ItemInteractionResult.CONSUME;
         }
 

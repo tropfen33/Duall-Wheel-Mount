@@ -60,7 +60,7 @@ public class DualWheelMountRenderer extends KineticBlockEntityRenderer<DualWheel
                 be.getSteeringYawForRendering(), false, blockState, ms, buffer, vb, light, overlay);
     }
 
-    private void renderWheelAssembly(DualWheelMountBlockEntity be, ItemStack stack, float wheelAngle,
+    public static void renderWheelAssembly(DualWheelMountBlockEntity be, ItemStack stack, float wheelAngle,
                                      double extension, Direction wheelDirection, double steeringYaw, boolean leftWheel,
                                      BlockState state, PoseStack ms, MultiBufferSource buffer,
                                      VertexConsumer vb, int light, int overlay) {
@@ -157,7 +157,7 @@ public class DualWheelMountRenderer extends KineticBlockEntityRenderer<DualWheel
                         .translate(-0.5f, 0, -0.5f).renderInto(ms, vb);
             } else {
                 Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.NONE,
-                        light, overlay, ms, buffer, be.getLevel(), 0);
+                        light, overlay, ms, buffer, be != null ? be.getLevel() : null, 0);
             }
         }
         ms.popPose();

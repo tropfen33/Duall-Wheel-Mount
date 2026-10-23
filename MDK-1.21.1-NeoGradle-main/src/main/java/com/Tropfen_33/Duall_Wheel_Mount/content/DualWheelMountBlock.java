@@ -7,6 +7,7 @@ import dev.ryanhcode.offroad.index.OffroadDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -140,6 +141,15 @@ public class DualWheelMountBlock extends HorizontalKineticBlock
 
         if (state.hasBlockEntity() && !state.is(newState.getBlock())) {
             if (level.getBlockEntity(pos) instanceof DualWheelMountBlockEntity be) {
+                if (!level.isClientSide) {
+                    // Give the installed wheels back before the inventory is wiped.
+                    for (ItemStack wheel : new ItemStack[]{be.getLeftWheel(), be.getRightWheel()}) {
+                        if (!wheel.isEmpty()) {
+                            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5,
+                                    pos.getZ() + 0.5, wheel.copy());
+                        }
+                    }
+                }
                 be.clearContent();
             }
             level.removeBlockEntity(pos);

@@ -5,7 +5,7 @@ issueTrackerURL = "https://example.invalid/change-me"
 
 [[mods]]
 modId = "duall_wheel_mount"
-version = "1.0.0"
+version = "1.0.1"
 displayName = "Duall Wheel Mount"
 authors = "Tropfen_33"
 description = '''Adds a dual-wheel version of Offroad's Wheel Mount block, carrying two wheels side by side on one shared, steerable, brakeable axle.'''
@@ -50,5 +50,12 @@ description = '''Adds a dual-wheel version of Offroad's Wheel Mount block, carry
     modId = "offroad"
     type = "required"
     versionRange = "[1.3.1,)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+[[dependencies.'duall_wheel_mount']]
+    modId = "tracks"
+    type = "required"
+    versionRange = "[1.0.1,)"
     ordering = "AFTER"
     side = "BOTH"

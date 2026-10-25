@@ -54,16 +54,26 @@ public class DualWheelMountRenderer extends KineticBlockEntityRenderer<DualWheel
         // is rendered on the mount's left side; the LEFT wheel slot on its right.
         renderWheelAssembly(be, be.getRightWheel(), be.getLerpedRightAngle(partialTicks),
                 be.getLerpedRightExtension(partialTicks), facing.getCounterClockWise(),
-                be.getSteeringYawForRendering(), true, blockState, ms, buffer, vb, light, overlay);
+                be.getSteeringYawForRendering(), true, blockState, ms, buffer, vb, light, overlay,
+                be.getLerpedRenderOffset(partialTicks, false));
         renderWheelAssembly(be, be.getLeftWheel(), be.getLerpedLeftAngle(partialTicks),
                 be.getLerpedLeftExtension(partialTicks), facing.getClockWise(),
-                be.getSteeringYawForRendering(), false, blockState, ms, buffer, vb, light, overlay);
+                be.getSteeringYawForRendering(), false, blockState, ms, buffer, vb, light, overlay,
+                be.getLerpedRenderOffset(partialTicks, true));
     }
 
     public static void renderWheelAssembly(DualWheelMountBlockEntity be, ItemStack stack, float wheelAngle,
                                      double extension, Direction wheelDirection, double steeringYaw, boolean leftWheel,
                                      BlockState state, PoseStack ms, MultiBufferSource buffer,
                                      VertexConsumer vb, int light, int overlay) {
+        renderWheelAssembly(be, stack, wheelAngle, extension, wheelDirection, steeringYaw, leftWheel,
+                state, ms, buffer, vb, light, overlay, Vec3.ZERO);
+    }
+
+    public static void renderWheelAssembly(DualWheelMountBlockEntity be, ItemStack stack, float wheelAngle,
+                                     double extension, Direction wheelDirection, double steeringYaw, boolean leftWheel,
+                                     BlockState state, PoseStack ms, MultiBufferSource buffer,
+                                     VertexConsumer vb, int light, int overlay, Vec3 offset) {
         // Keep the suspension assembly visible even when this wheel slot is empty.
         // Only the tire-specific rendering below is conditional.
         TireLike tire = stack.get(OffroadDataComponents.TIRE);
@@ -74,7 +84,14 @@ public class DualWheelMountRenderer extends KineticBlockEntityRenderer<DualWheel
         final double springWheelPivotOffsetHor = 12.0 / 16.0;
         final double springWheelPivotOffsetVer = -2.0 / 16.0;
         final double horizontalWheelPosition = 22.0 / 16.0;
-        final double verticalWheelPosition = -extension;
+        // Suspension-key offset, converted into the assembly's own model frame.
+        // After the rotation below, model +Z points along wheelDirection (the wheel
+        // sits on model -Z) and model +X is wheelDirection's counter-clockwise side.
+        // Like on the original Offroad mount, only the wheel end and the telescope
+        // base follow the offset; the spring keeps its anchor and just swings.
+        final double offX = offset.x * wheelDirection.getStepZ() - offset.z * wheelDirection.getStepX();
+        final double offZ = offset.x * wheelDirection.getStepX() + offset.z * wheelDirection.getStepZ();
+        final double verticalWheelPosition = -extension + offset.y;
         final double teleMountHor = 0.0;
         final double teleMountVer = -6.0 / 16.0;
         final double springMountHor = 7.0 / 16.0;
@@ -108,7 +125,7 @@ public class DualWheelMountRenderer extends KineticBlockEntityRenderer<DualWheel
         // Telescope: the outer tube stays attached to the mount; the inner tube
         // extends with the wheel, following the original renderer's distance math.
         ms.pushPose();
-        ms.translate(0, -6.0 / 16.0, 0);
+        ms.translate(offX, -6.0 / 16.0, offZ);
         ms.translate(0.5, 0.5, 0.5);
         ms.mulPose(Axis.XP.rotation((float) teleAngle));
         ms.translate(-0.5, -0.5, -0.5);
@@ -119,7 +136,7 @@ public class DualWheelMountRenderer extends KineticBlockEntityRenderer<DualWheel
 
         // Wheel carrier and tire pivot move by the interpolated suspension extension.
         ms.pushPose();
-        ms.translate(0, verticalWheelPosition, 26.0 / 16.0 - horizontalWheelPosition);
+        ms.translate(offX, verticalWheelPosition, offZ + 26.0 / 16.0 - horizontalWheelPosition);
         ms.translate(0.5, 0.5, 0.5);
         ms.rotateAround(Axis.YP.rotation((float) steeringYaw), 0, 0,
                 (float) (-horizontalWheelPosition + 6.0 / 16.0));
@@ -165,9 +182,9 @@ public class DualWheelMountRenderer extends KineticBlockEntityRenderer<DualWheel
         // Spring is recalculated from the same wheel extension, so it follows
         // the wheel instead of remaining a static decoration.
         ms.pushPose();
-        ms.translate(0.5, 0.5 + springMountVer, 0.5 - springMountHor);
+        ms.translate(0.5 + offX, 0.5 + springMountVer, 0.5 + offZ - springMountHor);
         ms.mulPose(Axis.XP.rotation((float) springAngle + Mth.PI / 2.0f));
-        ms.translate(-0.5, -0.5 - springMountVer, -0.5 + springMountHor);
+        ms.translate(-0.5 - offX, -0.5 - springMountVer, -0.5 - offZ + springMountHor);
         float springSpan = (float) springDistance - 4.0f / 16.0f;
         springTop.light(light).renderInto(ms, vb);
         springMiddle.light(light)

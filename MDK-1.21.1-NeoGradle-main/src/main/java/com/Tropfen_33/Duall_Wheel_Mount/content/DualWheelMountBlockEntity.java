@@ -13,6 +13,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBehaviour.ValueSettings;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
+import dev.qwxon.tracks.mixin_interface.WheelMountOffsetAccess;
 import dev.ryanhcode.offroad.content.components.TireLike;
 import dev.ryanhcode.offroad.index.OffroadDataComponents;
 import dev.ryanhcode.sable.Sable;
@@ -56,7 +57,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class DualWheelMountBlockEntity extends KineticBlockEntity
-        implements BlockEntitySubLevelActor, Clearable {
+        implements BlockEntitySubLevelActor, Clearable, WheelMountOffsetAccess {
 
     private static final String INVENTORY_TAG = "Wheels";
 
@@ -86,6 +87,32 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
 
     private boolean leftLiftedUp;
     private boolean rightLiftedUp;
+
+    // ---- Create: Tracks suspension key support (WheelMountOffsetAccess) ----
+    // Same ranges/steps and NBT keys Create: Tracks uses on Offroad's Wheel Mount.
+    private static final double OFFSET_STEP = 0.125;
+    private static final double MIN_LATERAL_OFFSET = -1.0;
+    private static final double MAX_LATERAL_OFFSET = 1.5;
+    private static final double MIN_LONGITUDINAL_OFFSET = -1.0;
+    private static final double MAX_LONGITUDINAL_OFFSET = 1.5;
+    private static final double MIN_HEIGHT_OFFSET = -0.75;
+    private static final double MAX_HEIGHT_OFFSET = 0.75;
+    private static final double MIN_MULTIPLIER = 0.1;
+    private static final double MAX_MULTIPLIER = 4.0;
+
+    private double lateralOffset;
+    private double longitudinalOffset;
+    private double heightOffset;
+    private double springMultiplier = 1.0;
+    private double driveMultiplier = 1.0;
+    private double gripMultiplier = 1.0;
+    private boolean visualSuspensionHidden;
+
+    // Client-side eased copies of the offsets, used for smooth rendering.
+    private double visLateral, lastVisLateral;
+    private double visLongitudinal, lastVisLongitudinal;
+    private double visHeight, lastVisHeight;
+    private boolean visualOffsetsInitialized;
 
     private final Vector3d leftForcePos = new Vector3d();
     private final Vector3d rightForcePos = new Vector3d();
@@ -197,7 +224,7 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         double effectiveStrength = this.strength == null ? 10.0 : this.strength.getValue();
         double normalMassScaling = Math.min(normalMass / effectiveStrength, 1.0) * 10.0;
         double strengthMul = effectiveStrength * normalMassScaling * 2.0;
-        double springStrength = effectiveStrength * normalMassScaling * 40.0;
+        double springStrength = effectiveStrength * normalMassScaling * 40.0 * springMultiplier;
         double dampingStrength = effectiveStrength * normalMassScaling;
 
         // Front redstone steers right; back redstone steers left.
@@ -284,7 +311,7 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         // still contribute suspension, braking, and lateral friction separately.
         double currentRollingSpeed = localVelocity.dot(normalD);
         double targetRollingSpeed = kineticSpeed * (Math.PI * 2.0 * radius / 60.0);
-        double driveForce = kineticSpeed * (1.0 - brakeStrength) * surfaceBraking * 1.75 * timeStep;
+        double driveForce = kineticSpeed * (1.0 - brakeStrength) * surfaceBraking * 1.75 * driveMultiplier * timeStep;
         if (kineticSpeed * currentRollingSpeed > 0.0
                 && Math.abs(currentRollingSpeed) >= Math.abs(targetRollingSpeed)) {
             driveForce = 0.0;
@@ -295,7 +322,7 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
                         + driveForce,
                 normalD);
         force.fma(
-                localVelocity.dot(sideD) * -0.6 * friction * strengthMul * timeStep,
+                localVelocity.dot(sideD) * -0.6 * gripMultiplier * friction * strengthMul * timeStep,
                 sideD);
 
         forceTotal.applyImpulseAtPoint(subLevel, forcePos, force);
@@ -303,7 +330,144 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
 
     private Vec3 getWheelPosition(Direction facing, boolean leftSide) {
         Direction side = leftSide ? facing.getCounterClockWise() : facing.getClockWise();
-        return getBlockPos().relative(side).getCenter();
+        return getBlockPos().relative(side).getCenter().add(offsetVector(facing, leftSide ? -lateralOffset : lateralOffset, longitudinalOffset, heightOffset));
+    }
+
+    /**
+     * Offset in the mount's local frame, matching Create: Tracks' convention for
+     * Offroad's Wheel Mount: lateral = clockwise of facing, longitudinal = facing, height = up.
+     */
+    private static Vec3 offsetVector(Direction facing, double lateral, double longitudinal, double height) {
+        Vec3 lateralAxis = Vec3.atLowerCornerOf(facing.getClockWise().getNormal());
+        Vec3 longitudinalAxis = Vec3.atLowerCornerOf(facing.getNormal());
+        return lateralAxis.scale(lateral).add(longitudinalAxis.scale(longitudinal)).add(0.0, height, 0.0);
+    }
+
+    /** Eased offset for rendering, in block-local space. */
+    public Vec3 getLerpedRenderOffset(float partialTick, boolean leftSide) {
+        Direction facing = getBlockState().getValue(DualWheelMountBlock.HORIZONTAL_FACING);
+        // Lateral is mirrored per wheel: positive moves each wheel away from the mount.
+        double lateral = Mth.lerp(partialTick, lastVisLateral, visLateral);
+        return offsetVector(facing,
+                leftSide ? -lateral : lateral,
+                Mth.lerp(partialTick, lastVisLongitudinal, visLongitudinal),
+                Mth.lerp(partialTick, lastVisHeight, visHeight));
+    }
+
+    private static double snap(double value, double step) {
+        return Math.round(value / step) * step;
+    }
+
+    private void tuningChanged() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            sendData();
+        }
+    }
+
+    @Override
+    public double tracks$adjustLateralOffset(int direction) {
+        lateralOffset = Mth.clamp(snap(lateralOffset + direction * OFFSET_STEP, OFFSET_STEP),
+                MIN_LATERAL_OFFSET, MAX_LATERAL_OFFSET);
+        tuningChanged();
+        return lateralOffset;
+    }
+
+    @Override
+    public double tracks$adjustLongitudinalOffset(int direction) {
+        longitudinalOffset = Mth.clamp(snap(longitudinalOffset + direction * OFFSET_STEP, OFFSET_STEP),
+                MIN_LONGITUDINAL_OFFSET, MAX_LONGITUDINAL_OFFSET);
+        tuningChanged();
+        return longitudinalOffset;
+    }
+
+    @Override
+    public double tracks$adjustHeightOffset(int direction) {
+        heightOffset = Mth.clamp(snap(heightOffset + direction * OFFSET_STEP, OFFSET_STEP),
+                MIN_HEIGHT_OFFSET, MAX_HEIGHT_OFFSET);
+        tuningChanged();
+        return heightOffset;
+    }
+
+    @Override
+    public double tracks$adjustTuning(String key, int direction) {
+        double step = "drive".equals(key) ? 0.1 : 0.05;
+        double next = Mth.clamp(snap(tracks$getTuning(key) + direction * step, step),
+                MIN_MULTIPLIER, MAX_MULTIPLIER);
+        switch (key) {
+            case "spring" -> springMultiplier = next;
+            case "drive" -> driveMultiplier = next;
+            case "grip" -> gripMultiplier = next;
+            default -> {
+                return 1.0;
+            }
+        }
+        tuningChanged();
+        return next;
+    }
+
+    @Override
+    public double tracks$getTuning(String key) {
+        return switch (key) {
+            case "spring" -> springMultiplier;
+            case "drive" -> driveMultiplier;
+            case "grip" -> gripMultiplier;
+            default -> 1.0;
+        };
+    }
+
+    @Override
+    public void tracks$resetTuning() {
+        lateralOffset = 0.0;
+        longitudinalOffset = 0.0;
+        heightOffset = 0.0;
+        springMultiplier = 1.0;
+        driveMultiplier = 1.0;
+        gripMultiplier = 1.0;
+        tuningChanged();
+    }
+
+    @Override
+    public double tracks$getLerpedLateralOffset(float partialTick) {
+        return Mth.lerp(partialTick, lastVisLateral, visLateral);
+    }
+
+    @Override
+    public double tracks$getLerpedLongitudinalOffset(float partialTick) {
+        return Mth.lerp(partialTick, lastVisLongitudinal, visLongitudinal);
+    }
+
+    @Override
+    public double tracks$getLerpedHeightOffset(float partialTick) {
+        return Mth.lerp(partialTick, lastVisHeight, visHeight);
+    }
+
+    @Override
+    public double tracks$getLerpedYaw(float partialTick) {
+        return getSteeringYawForRendering();
+    }
+
+    @Override
+    public boolean tracks$isVisualSuspensionHidden() {
+        return visualSuspensionHidden;
+    }
+
+    @Override
+    public void tracks$toggleVisualSuspensionHidden() {
+        visualSuspensionHidden = !visualSuspensionHidden;
+        tuningChanged();
+    }
+
+    @Override
+    public int tracks$getClientSteeringSignalLeft() {
+        Direction facing = getBlockState().getValue(DualWheelMountBlock.HORIZONTAL_FACING);
+        return level == null ? 0 : level.getSignal(getBlockPos().relative(facing.getOpposite()), facing.getOpposite());
+    }
+
+    @Override
+    public int tracks$getClientSteeringSignalRight() {
+        Direction facing = getBlockState().getValue(DualWheelMountBlock.HORIZONTAL_FACING);
+        return level == null ? 0 : level.getSignal(getBlockPos().relative(facing), facing);
     }
 
     private static double fudgeFriction(double realValue) {
@@ -406,10 +570,17 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         lastRightExtension = rightExtension;
         lastLeftAngle = leftAngle;
         lastRightAngle = rightAngle;
+        lastVisLateral = visLateral;
+        lastVisLongitudinal = visLongitudinal;
+        lastVisHeight = visHeight;
 
         if (!level.isClientSide) {
             return;
         }
+
+        visLateral = Mth.lerp(0.5, visLateral, lateralOffset);
+        visLongitudinal = Mth.lerp(0.5, visLongitudinal, longitudinalOffset);
+        visHeight = Mth.lerp(0.5, visHeight, heightOffset);
 
         updateClientWheel(true);
         updateClientWheel(false);
@@ -562,6 +733,13 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         tag.put(INVENTORY_TAG, inventory.write(registries));
+        tag.putDouble("TracksLateralOffset", lateralOffset);
+        tag.putDouble("TracksLongitudinalOffset", longitudinalOffset);
+        tag.putDouble("TracksHeightOffset", heightOffset);
+        tag.putDouble("TracksWheelSpringMultiplier", springMultiplier);
+        tag.putDouble("TracksWheelDriveMultiplier", driveMultiplier);
+        tag.putDouble("TracksWheelGripMultiplier", gripMultiplier);
+        tag.putBoolean("TracksVisualSuspensionHidden", visualSuspensionHidden);
         super.write(tag, registries, clientPacket);
     }
 
@@ -573,6 +751,20 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         }
         inventory.suppressUpdate = false;
         onStackChanged();
+        if (tag.contains("TracksLateralOffset")) lateralOffset = tag.getDouble("TracksLateralOffset");
+        if (tag.contains("TracksLongitudinalOffset")) longitudinalOffset = tag.getDouble("TracksLongitudinalOffset");
+        if (tag.contains("TracksHeightOffset")) heightOffset = tag.getDouble("TracksHeightOffset");
+        if (tag.contains("TracksWheelSpringMultiplier")) springMultiplier = tag.getDouble("TracksWheelSpringMultiplier");
+        if (tag.contains("TracksWheelDriveMultiplier")) driveMultiplier = tag.getDouble("TracksWheelDriveMultiplier");
+        if (tag.contains("TracksWheelGripMultiplier")) gripMultiplier = tag.getDouble("TracksWheelGripMultiplier");
+        visualSuspensionHidden = tag.getBoolean("TracksVisualSuspensionHidden");
+        if (!visualOffsetsInitialized) {
+            // First sync after load: snap instead of easing in from zero.
+            visualOffsetsInitialized = true;
+            visLateral = lastVisLateral = lateralOffset;
+            visLongitudinal = lastVisLongitudinal = longitudinalOffset;
+            visHeight = lastVisHeight = heightOffset;
+        }
         super.read(tag, registries, clientPacket);
     }
 

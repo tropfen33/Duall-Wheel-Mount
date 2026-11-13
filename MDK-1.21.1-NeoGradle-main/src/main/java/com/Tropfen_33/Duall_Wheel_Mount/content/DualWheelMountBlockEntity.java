@@ -1,5 +1,6 @@
 package com.Tropfen_33.Duall_Wheel_Mount.content;
 
+import com.Tropfen_33.Duall_Wheel_Mount.compat.DriveByWireCompat;
 import com.Tropfen_33.Duall_Wheel_Mount.registry.ModBlockEntities;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -460,14 +461,12 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
 
     @Override
     public int tracks$getClientSteeringSignalLeft() {
-        Direction facing = getBlockState().getValue(DualWheelMountBlock.HORIZONTAL_FACING);
-        return level == null ? 0 : level.getSignal(getBlockPos().relative(facing.getOpposite()), facing.getOpposite());
+        return backSignal();
     }
 
     @Override
     public int tracks$getClientSteeringSignalRight() {
-        Direction facing = getBlockState().getValue(DualWheelMountBlock.HORIZONTAL_FACING);
-        return level == null ? 0 : level.getSignal(getBlockPos().relative(facing), facing);
+        return frontSignal();
     }
 
     private static double fudgeFriction(double realValue) {
@@ -535,14 +534,53 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         return new TerrainCastResult(minExtension, minNormal, minHitSubLevel, minInteractingBlock);
     }
 
+    // ---- Redstone / Drive-By-Wire inputs -------------------------------------------------
+    // Mirrors Offroad's wheel mount: the inputs are read once per tick on the SERVER's main
+    // thread, cached, and synced to clients. Physics (server) and rendering (client) then use
+    // the cached values instead of querying redstone themselves. Querying on the client or on
+    // the physics thread misses signals that only exist in Drive-By-Wire's server-side network.
+    private volatile int wireFrontSignal;
+    private volatile int wireBackSignal;
+    private volatile int wireBrakeSignal;
+    private int clientFrontSignal;
+    private int clientBackSignal;
+    private int clientBrakeSignal;
+
+    private void updateWireInputs() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        Direction facing = getBlockState().getValue(DualWheelMountBlock.HORIZONTAL_FACING);
+        BlockPos pos = getBlockPos();
+        int front = DriveByWireCompat.getSignal(level, pos.relative(facing), facing);
+        int back = DriveByWireCompat.getSignal(level, pos.relative(facing.getOpposite()), facing.getOpposite());
+        int brake = DriveByWireCompat.getSignal(level, pos.below(), Direction.DOWN);
+        DriveByWireCompat.debug(level, pos);
+        boolean changed = front != wireFrontSignal || back != wireBackSignal || brake != wireBrakeSignal;
+        wireFrontSignal = front;
+        wireBackSignal = back;
+        wireBrakeSignal = brake;
+        if (changed) {
+            sendData();
+        }
+    }
+
+    private int frontSignal() {
+        return (level != null && level.isClientSide) ? clientFrontSignal : wireFrontSignal;
+    }
+
+    private int backSignal() {
+        return (level != null && level.isClientSide) ? clientBackSignal : wireBackSignal;
+    }
+
     public double getSteeringYawForRendering() {
         Direction facing = getBlockState().getValue(DualWheelMountBlock.HORIZONTAL_FACING);
         return getSteeringYaw(facing);
     }
 
     private double getSteeringYaw(Direction facing) {
-        int frontSignal = this.level.getSignal(this.getBlockPos().relative(facing), facing);
-        int backSignal = this.level.getSignal(this.getBlockPos().relative(facing.getOpposite()), facing.getOpposite());
+        int frontSignal = frontSignal();
+        int backSignal = backSignal();
 
         // Front redstone must always steer to the mount's right, regardless
         // of which horizontal direction the mount faces. The local steering
@@ -553,7 +591,8 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
     }
 
     private double getBrakeStrength() {
-        return this.level.getSignal(this.getBlockPos().below(), Direction.DOWN) / 15.0;
+        int brake = (level != null && level.isClientSide) ? clientBrakeSignal : wireBrakeSignal;
+        return brake / 15.0;
     }
 
     private Vector3dc getRotatedWheelAxis(Vec3i axis, double steeringYaw) {
@@ -575,6 +614,7 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         lastVisHeight = visHeight;
 
         if (!level.isClientSide) {
+            updateWireInputs();
             return;
         }
 
@@ -740,6 +780,11 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         tag.putDouble("TracksWheelDriveMultiplier", driveMultiplier);
         tag.putDouble("TracksWheelGripMultiplier", gripMultiplier);
         tag.putBoolean("TracksVisualSuspensionHidden", visualSuspensionHidden);
+        if (clientPacket) {
+            tag.putInt("WireFrontSignal", wireFrontSignal);
+            tag.putInt("WireBackSignal", wireBackSignal);
+            tag.putInt("WireBrakeSignal", wireBrakeSignal);
+        }
         super.write(tag, registries, clientPacket);
     }
 
@@ -758,6 +803,11 @@ public class DualWheelMountBlockEntity extends KineticBlockEntity
         if (tag.contains("TracksWheelDriveMultiplier")) driveMultiplier = tag.getDouble("TracksWheelDriveMultiplier");
         if (tag.contains("TracksWheelGripMultiplier")) gripMultiplier = tag.getDouble("TracksWheelGripMultiplier");
         visualSuspensionHidden = tag.getBoolean("TracksVisualSuspensionHidden");
+        if (clientPacket) {
+            clientFrontSignal = tag.getInt("WireFrontSignal");
+            clientBackSignal = tag.getInt("WireBackSignal");
+            clientBrakeSignal = tag.getInt("WireBrakeSignal");
+        }
         if (!visualOffsetsInitialized) {
             // First sync after load: snap instead of easing in from zero.
             visualOffsetsInitialized = true;

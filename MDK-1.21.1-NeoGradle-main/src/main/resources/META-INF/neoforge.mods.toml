@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "${loader_version_range}"
 license = "${mod_license}"
-issueTrackerURL = "https://example.invalid/change-me"
+issueTrackerURL = "https://github.com/tropfen33/Duall-Wheel-Mount/issues"
 
 [[mods]]
 modId = "${mod_id}"
@@ -9,7 +9,7 @@ version = "${mod_version}"
 displayName = "${mod_name}"
 authors = "Tropfen_33"
 description = '''Adds a dual-wheel version of Offroad's Wheel Mount block, carrying two wheels side by side on one shared, steerable, brakeable axle.'''
-# logoFile = "duall_wheel_mount.png" # add a real logo PNG here and uncomment if you want one
+logoFile = "Aero-Dual-Mount_Logo.png"
 
 [[dependencies.'${mod_id}']]
     modId = "neoforge"
